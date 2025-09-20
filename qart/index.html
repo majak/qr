@@ -2,7 +2,8 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>QArt Coder</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nice QR</title>
   <script src="wasm_exec.js"></script>
   <script type="text/javascript">
     function fetchAndInstantiate(url, importObject) {
@@ -79,12 +80,42 @@
   </script>
   <style>
     body {
-      font-family: sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       padding: 1em;
+      background-color: #f4f4f9;
+      color: #333;
     }
     .container {
       max-width: 600px;
       margin: 0 auto;
+      background-color: #fff;
+      padding: 2em;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    #controls {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    input[type="text"] {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1em;
+    }
+    button {
+      padding: 12px 20px;
+      border: none;
+      background-color: #007bff;
+      color: white;
+      border-radius: 4px;
+      font-size: 1em;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    button:hover {
+      background-color: #0056b3;
     }
     #qr-grid {
       display: grid;
@@ -94,20 +125,28 @@
     }
     #qr-grid img {
       width: 100%;
-      border: 1px solid #ccc;
+      border: 1px solid #eee;
+      border-radius: 4px;
+    }
+    @media (max-width: 600px) {
+      #qr-grid {
+        grid-template-columns: 1fr;
+      }
+      .container {
+        padding: 1em;
+      }
     }
   </style>
-  <title>Nice QR</title>
 </head>
 <body>
   <div class="container">
   <h1><center>Nice QR</center></h1>
   <h2><center>QR code generator</center></h2>
   <div id="controls">
-    <label for="url">URL:</label> <input id="url" type="text" size="60" value="https://research.swtch.com/qart">
-    <br>
-    <label for="prompt">Image Prompt:</label> <input id="prompt" type="text" size="60" value="cat">
-    <br>
+    <label for="url">URL:</label>
+    <input id="url" type="text" value="https://niceqr.app/">
+    <label for="prompt">Image Prompt:</label>
+    <input id="prompt" type="text" value="cat">
     <button id="generate">Generate QR Codes</button>
   </div>
   <div id="qr-grid"></div>
