@@ -17,12 +17,12 @@
     var go = new Go();
     var mod = fetchAndInstantiate("main.wasm", go.importObject);
     window.onload = function() {
-      console.log("WASM module loaded, running Go program.");
-      go.run(instance);
+      mod.then(function(instance) {
+        go.run(instance);
+      });
     };
 
     async function generateImageAndTriggerUpload() {
-      alert("Generate button clicked! Check the console for logs.");
       const prompt = document.getElementById('prompt').value;
       if (!prompt) {
         alert('Please enter an image prompt.');
@@ -30,8 +30,7 @@
       }
 
       try {
-        console.log("JavaScript: Fetching image for prompt:", prompt);
-        const response = await fetch(`http://127.0.0.1:5000/generate-pixel-art`, {
+        const response = await fetch(`/proxy-pixel-art`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -46,27 +45,19 @@
         if (!data.images || data.images.length === 0) {
           throw new Error('No images returned from server.');
         }
-        console.log("JavaScript: Image received from server.");
 
         // Convert base64 to a Uint8Array
         const base64Response = await fetch(data.images[0]);
         const blob = await base64Response.blob();
         const arrayBuffer = await blob.arrayBuffer();
         const uint8Array = new Uint8Array(arrayBuffer);
-        console.log("JavaScript: Image data prepared for Go. Size:", uint8Array.length);
 
-        // Check if the Go function is available before calling it
-        if (typeof setImageData === 'function') {
-          console.log("JavaScript: Calling Go function 'setImageData'.");
-          setImageData(uint8Array);
-        } else {
-          console.error("JavaScript Error: The Go function 'setImageData' is not defined. The WASM module may not have initialized correctly.");
-          document.getElementById('err-output').innerText = 'Error: WASM module not ready.';
-        }
+        // Call the exported Go function
+        setImageData(uint8Array);
 
       } catch (e) {
         console.error('Failed to fetch image:', e);
-        document.getElementById('err-output').innerText = 'Failed to fetch image. Make sure the server at http://127.0.0.1:5000 is running.';
+        document.getElementById('err-output').innerText = 'Error fetching image from Vercel. Please check the console for details.';
       }
     }
   </script>
@@ -107,7 +98,7 @@
   </style>
 </head>
 <body>
-  <h1><center>QArt Coder (DEBUG MODE)</center></h1>
+  <h1><center>QArt Coder</center></h1>
   <div class="all">
   <div class="article">
   <div id="output">
