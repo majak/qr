@@ -64,6 +64,25 @@ button:disabled {
   border: 1px solid #eee;
   border-radius: 4px;
 }
+#thinking-indicator {
+  display: none;
+}
+
+#thinking-indicator.show {
+  display: inline-block;
+}
+
+#thinking-indicator span {
+  color: #666;
+  font-size: 14px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
 @media (max-width: 600px) {
   #qr-grid {
     grid-template-columns: 1fr;
