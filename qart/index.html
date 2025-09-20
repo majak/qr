@@ -5,22 +5,70 @@
   <title>QArt Coder</title>
   <script src="wasm_exec.js"></script>
   <script type="text/javascript">
-function fetchAndInstantiate(url, importObject) {
-  return fetch(url).then(response =>
-    response.arrayBuffer()
-  ).then(bytes =>
-    WebAssembly.instantiate(bytes, importObject)
-  ).then(results =>
-      results.instance
-  );
-}
-var go = new Go();
-var mod = fetchAndInstantiate("main.wasm", go.importObject);
-window.onload = function() {
-  mod.then(function(instance) {
-    go.run(instance);
-  });
-};
+    function fetchAndInstantiate(url, importObject) {
+      return fetch(url).then(response =>
+        response.arrayBuffer()
+      ).then(bytes =>
+        WebAssembly.instantiate(bytes, importObject)
+      ).then(results =>
+          results.instance
+      );
+    }
+    var go = new Go();
+    var mod = fetchAndInstantiate("main.wasm", go.importObject);
+    window.onload = function() {
+      console.log("WASM module loaded, running Go program.");
+      go.run(instance);
+    };
+
+    async function generateImageAndTriggerUpload() {
+      alert("Generate button clicked! Check the console for logs.");
+      const prompt = document.getElementById('prompt').value;
+      if (!prompt) {
+        alert('Please enter an image prompt.');
+        return;
+      }
+
+      try {
+        console.log("JavaScript: Fetching image for prompt:", prompt);
+        const response = await fetch(`http://127.0.0.1:5000/generate-pixel-art`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ prompt: prompt })
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        if (!data.images || data.images.length === 0) {
+          throw new Error('No images returned from server.');
+        }
+        console.log("JavaScript: Image received from server.");
+
+        // Convert base64 to a Uint8Array
+        const base64Response = await fetch(data.images[0]);
+        const blob = await base64Response.blob();
+        const arrayBuffer = await blob.arrayBuffer();
+        const uint8Array = new Uint8Array(arrayBuffer);
+        console.log("JavaScript: Image data prepared for Go. Size:", uint8Array.length);
+
+        // Check if the Go function is available before calling it
+        if (typeof setImageData === 'function') {
+          console.log("JavaScript: Calling Go function 'setImageData'.");
+          setImageData(uint8Array);
+        } else {
+          console.error("JavaScript Error: The Go function 'setImageData' is not defined. The WASM module may not have initialized correctly.");
+          document.getElementById('err-output').innerText = 'Error: WASM module not ready.';
+        }
+
+      } catch (e) {
+        console.error('Failed to fetch image:', e);
+        document.getElementById('err-output').innerText = 'Failed to fetch image. Make sure the server at http://127.0.0.1:5000 is running.';
+      }
+    }
   </script>
   <style>
   .article {
@@ -59,7 +107,7 @@ window.onload = function() {
   </style>
 </head>
 <body>
-  <h1><center>QArt Coder</center></h1>
+  <h1><center>QArt Coder (DEBUG MODE)</center></h1>
   <div class="all">
   <div class="article">
   <div id="output">
@@ -82,33 +130,30 @@ window.onload = function() {
       <font size=-1>Tip: Short URLs work best.</font>
       <br>
       <br>
-      <input id="upload-input" type="file">
+      <label for="prompt">Image Prompt:</label> <input id="prompt" type="text" size="60" value="cat">
       <br>
-      <font size=-1>Tip: Small, high contrast images work best.
-      <br>
-      (The image is not uploaded anywhere; this page executes entirely in your browser.)
-      </font>
+      <font size=-1>Enter a prompt to generate an image.</font>
       </div>
       <div id="arrowbox">
       <table id="arrows">
         <tr>
           <td>
             <table cellspacing=0 cellpadding=0 border=0>
-            <tr><td><td><a style="button" id="up"><img id="arrow-up"><td>
-            <tr><td><a style="button" id="left"><img id="arrow-left"><td><img id="img-src"><td><a style="button" id="right"><img id="arrow-right">
-            <tr><td><td><a style="button" id="down"><img id="arrow-down"><td>
+            <tr><td><td><a style="cursor: pointer;" id="up"><img id="arrow-up"><td>
+            <tr><td><a style="cursor: pointer;" id="left"><img id="arrow-left"><td><img id="img-src"><td><a style="cursor: pointer;" id="right"><img id="arrow-right">
+            <tr><td><td><a style="cursor: pointer;" id="down"><img id="arrow-down"><td>
             </table>
           <td>
             <table cellspacing=5 cellpadding=0 border=0>
             <tr>
-              <td><a style="button" id="smaller"><img id="arrow-smaller">
+              <td><a style="cursor: pointer;" id="smaller"><img id="arrow-smaller">
               <td>QR Size
-              <td><a style="button" id="bigger"><img id="arrow-bigger">
+              <td><a style="cursor: pointer;" id="bigger"><img id="arrow-bigger">
 
             <tr>
-              <td><a style="button" id="ismaller"><img id="arrow-ismaller">
+              <td><a style="cursor: pointer;" id="ismaller"><img id="arrow-ismaller">
               <td>Image Size
-              <td><a style="button" id="ibigger"><img id="arrow-ibigger">
+              <td><a style="cursor: pointer;" id="ibigger"><img id="arrow-ibigger">
             </table>
 
           <td>
@@ -133,7 +178,7 @@ window.onload = function() {
             <br>
             <br>
 
-            <button id="redraw">Redraw</button>
+            <button id="generate">Generate QR Code</button>
             &nbsp; &nbsp;
             <button id="rotate">Rotate</button>
       </table>
@@ -148,5 +193,8 @@ window.onload = function() {
     </div><!-- wasm -->
   </div><!-- leftcol -->
   </div><!-- article -->
+  <script>
+    document.getElementById('generate').addEventListener('click', generateImageAndTriggerUpload);
+  </script>
 </body>
 </html>

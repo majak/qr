@@ -82,12 +82,16 @@ func update() {
 	pic.Dither = checkDither.Get("checked").Bool()
 	pic.SaveControl = checkControl.Get("checked").Bool()
 	pic.URL = inputURL.Get("value").String()
+	fmt.Println("update: encoding image...")
 	img, err := pic.Encode()
+	if err != nil {
+		fmt.Println("update: encode error:", err)
+		setErr(err)
+		return
+	}
+	fmt.Println("update: encode success, setting image")
 	setImage("img-output", img)
 	doc.Call("getElementById", "img-download").Set("href", "data:image/png;base64,"+base64.StdEncoding.EncodeToString(img))
-	if err != nil {
-		setErr(err)
-	}
 }
 
 func funcOf(f func()) js.Func {
@@ -97,7 +101,29 @@ func funcOf(f func()) js.Func {
 	})
 }
 
+func setImageData(this js.Value, args []js.Value) any {
+	fmt.Println("setImageData: received call from javascript")
+	uint8Array := args[0]
+	data := make([]byte, uint8Array.Get("length").Int())
+	js.CopyBytesToGo(data, uint8Array)
+	fmt.Println("setImageData: received", len(data), "bytes")
+
+	pic.SetFile(data)
+	img, err := pic.Src()
+	if err != nil {
+		fmt.Println("setImageData: pic.Src error:", err)
+		setErr(err)
+		return nil
+	}
+	setImage("img-src", img)
+	update()
+	fmt.Println("setImageData: finished")
+	return nil
+}
+
 func main() {
+	js.Global().Set("setImageData", js.FuncOf(setImageData))
+
 	doc = js.Global().Get("document")
 	checkRand = doc.Call("getElementById", "rand")
 	checkData = doc.Call("getElementById", "data")
