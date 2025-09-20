@@ -39,7 +39,8 @@
         });
 
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          const errorText = await response.text();
+          throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
         }
         const data = await response.json();
         if (!data.images || data.images.length === 0) {
