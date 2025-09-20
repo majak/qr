@@ -2,8 +2,8 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>QArt Coder</title>
-  <!-- Favicons -->
+  <title>Nice QR</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="192x192" href="android-chrome-192x192.png">
@@ -83,37 +83,17 @@
       }
     }
   </script>
-  <style>
-    body {
-      font-family: sans-serif;
-      padding: 1em;
-    }
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-    }
-    #qr-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-top: 20px;
-    }
-    #qr-grid img {
-      width: 100%;
-      border: 1px solid #ccc;
-    }
-  </style>
-  <title>Nice QR</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="container">
   <h1><center>Nice QR</center></h1>
   <h2><center>QR code generator</center></h2>
   <div id="controls">
-    <label for="url">URL:</label> <input id="url" type="text" size="60" value="https://research.swtch.com/qart">
-    <br>
-    <label for="prompt">Image Prompt:</label> <input id="prompt" type="text" size="60" value="cat">
-    <br>
+    <label for="url">URL:</label>
+    <input id="url" type="text" value="https://niceqr.app/">
+    <label for="prompt">Image Prompt:</label>
+    <input id="prompt" type="text" value="cat">
     <button id="generate">Generate QR Codes</button>
   </div>
   <div id="qr-grid"></div>
