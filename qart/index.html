@@ -34,7 +34,7 @@
       grid.innerHTML = 'Generating images and QR codes...';
 
       try {
-        const response = await fetch(`/proxy-pixel-art`, {
+        const response = await fetch(`https://pixelart-pink.vercel.app/generate-pixel-art`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
