@@ -46,6 +46,18 @@ button:disabled {
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
   margin-top: 20px;
+  width: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+#qr-grid.status-message {
+  display: block;
+  text-align: center;
+  width: 100%;
+  padding: 10px;
+  font-size: 14px;
+  color: #666;
 }
 #qr-grid img {
   width: 100%;
