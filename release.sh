@@ -4,6 +4,7 @@ mkdir -p public
 
 GOOS=js GOARCH=wasm go build -o qart/main.wasm ./qart
 cp qart/index.html public/
+cp qart/niceqr.png public/
 cp qart/wasm_exec.js public/
 cp qart/main.wasm public/
 cp qart/style.css public/
