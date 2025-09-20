@@ -12,164 +12,45 @@
 package main
 
 import (
-	_ "embed"
 	"encoding/base64"
 	"fmt"
-	"html"
-	_ "image/gif"
-	_ "image/jpeg"
 	"syscall/js"
 )
 
-//go:embed pjw.png
-var pjwPNG []byte
+// generateQRCode is a stateless function that can be called from JavaScript.
+// It takes image data and a URL and returns a base64-encoded PNG of the QR code.
+func generateQRCode(this js.Value, args []js.Value) any {
+	imageData := args[0]
+	url := args[1].String()
 
-var (
-	doc js.Value // JS document
+	// Copy the image data from JavaScript to Go
+	data := make([]byte, imageData.Get("length").Int())
+	js.CopyBytesToGo(data, imageData)
 
-	// checkboxes
-	checkRand    js.Value
-	checkData    js.Value
-	checkDither  js.Value
-	checkControl js.Value
-
-	inputURL js.Value // url box
-)
-
-var pic = &Image{
-	File:    pjwPNG,
-	Dx:      4,
-	Dy:      4,
-	URL:     "https://research.swtch.com/qart",
-	Version: 6,
-	Mask:    2,
-}
-
-func up()       { pic.Dy++ }
-func down()     { pic.Dy-- }
-func left()     { pic.Dx++ }
-func right()    { pic.Dx-- }
-func ibigger()  { pic.Size++ }
-func ismaller() { pic.Size-- }
-func rotate()   { pic.Rotation = (pic.Rotation + 1) & 3 }
-
-func bigger() {
-	if pic.Version < 8 {
-		pic.Version++
+	// Create a new Image object for this specific request
+	pic := &Image{
+		File:    data,
+		URL:     url,
+		Version: 6, // Default version
+		Mask:    2, // Default mask
 	}
-}
 
-func smaller() {
-	if pic.Version > 1 {
-		pic.Version--
-	}
-}
-
-func setImage(id string, img []byte) {
-	doc.Call("getElementById", id).Set("src", "data:image/png;base64,"+base64.StdEncoding.EncodeToString(img))
-}
-
-func setErr(err error) {
-	doc.Call("getElementById", "err-output").Set("innerHTML", html.EscapeString(err.Error()))
-}
-
-func update() {
-	pic.Rand = checkRand.Get("checked").Bool()
-	pic.OnlyDataBits = checkData.Get("checked").Bool()
-	pic.Dither = checkDither.Get("checked").Bool()
-	pic.SaveControl = checkControl.Get("checked").Bool()
-	pic.URL = inputURL.Get("value").String()
-	fmt.Println("update: encoding image...")
-	img, err := pic.Encode()
+	// Generate the QR code
+	pngData, err := pic.Encode()
 	if err != nil {
-		fmt.Println("update: encode error:", err)
-		setErr(err)
-		return
+		// In case of an error, we can return a descriptive string.
+		// A more robust solution would be to return a structured error object.
+		return fmt.Sprintf("Error: %v", err)
 	}
-	fmt.Println("update: encode success, setting image")
-	setImage("img-output", img)
-	doc.Call("getElementById", "img-download").Set("href", "data:image/png;base64,"+base64.StdEncoding.EncodeToString(img))
-}
 
-func funcOf(f func()) js.Func {
-	return js.FuncOf(func(_ js.Value, _ []js.Value) any {
-		f()
-		return nil
-	})
-}
-
-func setImageData(this js.Value, args []js.Value) any {
-	fmt.Println("setImageData: received call from javascript")
-	uint8Array := args[0]
-	data := make([]byte, uint8Array.Get("length").Int())
-	js.CopyBytesToGo(data, uint8Array)
-	fmt.Println("setImageData: received", len(data), "bytes")
-
-	pic.SetFile(data)
-	img, err := pic.Src()
-	if err != nil {
-		fmt.Println("setImageData: pic.Src error:", err)
-		setErr(err)
-		return nil
-	}
-	setImage("img-src", img)
-	update()
-	fmt.Println("setImageData: finished")
-	return nil
+	// Return the base64-encoded PNG data
+	return base64.StdEncoding.EncodeToString(pngData)
 }
 
 func main() {
-	js.Global().Set("setImageData", js.FuncOf(setImageData))
+	// Export the stateless function to be called from JavaScript
+	js.Global().Set("generateQRCode", js.FuncOf(generateQRCode))
 
-	doc = js.Global().Get("document")
-	checkRand = doc.Call("getElementById", "rand")
-	checkData = doc.Call("getElementById", "data")
-	checkDither = doc.Call("getElementById", "dither")
-	checkControl = doc.Call("getElementById", "control")
-	inputURL = doc.Call("getElementById", "url")
-
-	setImage("arrow-right", Arrow(48, 0))
-	setImage("arrow-up", Arrow(48, 1))
-	setImage("arrow-left", Arrow(48, 2))
-	setImage("arrow-down", Arrow(48, 3))
-
-	setImage("arrow-smaller", Arrow(20, 2))
-	setImage("arrow-bigger", Arrow(20, 0))
-
-	setImage("arrow-ismaller", Arrow(20, 2))
-	setImage("arrow-ibigger", Arrow(20, 0))
-
-	update()
-
-	doc.Call("getElementById", "loading").Get("style").Set("display", "none")
-	doc.Call("getElementById", "wasm1").Get("style").Set("display", "block")
-	doc.Call("getElementById", "wasm2").Get("style").Set("display", "block")
-
-	if img, err := pic.Src(); err == nil {
-		setImage("img-src", img)
-	} else {
-		setErr(err)
-	}
-
-	do := func(id string, f func()) {
-		doc.Call("getElementById", id).Set("onclick", funcOf(func() { f(); update() }))
-	}
-	do("left", left)
-	do("right", right)
-	do("up", up)
-	do("down", down)
-	do("smaller", smaller)
-	do("bigger", bigger)
-	do("ismaller", ismaller)
-	do("ibigger", ibigger)
-	do("rotate", rotate)
-
-	updateJS := funcOf(update)
-	// Note: "redraw" button was renamed to "generate" in the HTML, but we now have a dedicated listener for it.
-	for _, id := range []string{"rand", "data", "dither", "control"} {
-		doc.Call("getElementById", id).Set("onclick", updateJS)
-	}
-	inputURL.Call("addEventListener", "change", updateJS)
-
+	// Keep the Go program running
 	<-make(chan bool)
 }
