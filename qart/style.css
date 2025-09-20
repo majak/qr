@@ -36,6 +36,11 @@ button {
 button:hover {
   background-color: #0056b3;
 }
+button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
 #qr-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

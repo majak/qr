@@ -36,7 +36,11 @@
         return;
       }
 
+      const button = document.getElementById('generate');
       const grid = document.getElementById('qr-grid');
+
+      button.disabled = true;
+      button.textContent = 'Generating...';
       grid.innerHTML = 'Generating images and QR codes...';
 
       try {
@@ -79,7 +83,10 @@
         }
       } catch (e) {
         console.error('Failed to fetch image:', e);
-        grid.innerHTML = `Error: ${e.message}`;
+        grid.innerHTML = `Failed to fetch images. Try a different image prompt.`;
+      } finally {
+        button.disabled = false;
+        button.textContent = 'Generate QR Codes';
       }
     }
   </script>
