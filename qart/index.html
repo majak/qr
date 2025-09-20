@@ -147,6 +147,10 @@
   <script>
     document.getElementById('generate').addEventListener('click', generateAllQRCodes);
 
+    document.getElementById('url').addEventListener('focus', function() {
+      this.select();
+    });
+
     document.getElementById('url').addEventListener('paste', async function(e) {
       console.log('paste event detected');
       setTimeout(async () => {
