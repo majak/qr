@@ -12,15 +12,12 @@
 package main
 
 import (
-	"bytes"
 	_ "embed"
 	"encoding/base64"
 	"fmt"
 	"html"
-	"image"
 	_ "image/gif"
 	_ "image/jpeg"
-	"strings"
 	"syscall/js"
 )
 
@@ -168,52 +165,11 @@ func main() {
 	do("rotate", rotate)
 
 	updateJS := funcOf(update)
-	for _, id := range []string{"rand", "data", "dither", "control", "redraw"} {
+	// Note: "redraw" button was renamed to "generate" in the HTML, but we now have a dedicated listener for it.
+	for _, id := range []string{"rand", "data", "dither", "control"} {
 		doc.Call("getElementById", id).Set("onclick", updateJS)
 	}
 	inputURL.Call("addEventListener", "change", updateJS)
 
-	fmt.Println("hello")
-	doc.Call("getElementById", "upload-input").Call("addEventListener", "change",
-		js.FuncOf(func(this js.Value, args []js.Value) any {
-			fmt.Println("newfile")
-			files := this.Get("files")
-			if files.Get("length").Int() != 1 {
-				return nil
-			}
-			r := js.Global().Get("FileReader").New()
-			var cb js.Func
-			cb = js.FuncOf(func(this js.Value, args []js.Value) any {
-				_, enc, _ := strings.Cut(r.Get("result").String(), ";base64,")
-				fmt.Printf("%q\n", enc)
-				data, err := base64.StdEncoding.DecodeString(enc)
-				defer cb.Release()
-				if err != nil {
-					setErr(err)
-					return nil
-				}
-				fmt.Println(len(data))
-				fmt.Printf("%q\n", data[:20])
-
-				_, _, err = image.Decode(bytes.NewReader(data))
-				if err != nil {
-					setErr(err)
-					return nil
-				}
-				pic.SetFile(data)
-				img, err := pic.Src()
-				if err != nil {
-					setErr(err)
-					return nil
-				}
-				setImage("img-src", img)
-				update()
-				return nil
-			})
-			r.Call("addEventListener", "load", cb)
-			r.Call("readAsDataURL", files.Index(0))
-			return nil
-		}))
-
-	select {}
+	<-make(chan bool)
 }
