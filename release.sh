@@ -13,5 +13,6 @@ cp qart/android-chrome-512x512.png public/
 cp qart/favicon-16x16.png public/
 cp qart/favicon-32x32.png public/
 cp qart/favicon.ico public/
+cp CNAME public/
 
 npx gh-pages -d public/
